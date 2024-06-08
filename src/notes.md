@@ -29,3 +29,5 @@ Improved the modularity of the code by isolating component logic and ensuring ea
 Map Component Index Tracking:
 
 Updated the Map component to store the index of the current number as the value. This provides more accurate tracking and visualization of the 2 Sum problem process.
+
+updated Map to store the value of the key value pair to be the index number (using step number) associated to the key from the list.
