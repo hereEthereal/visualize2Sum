@@ -11,9 +11,9 @@ const setupApp = () => {
       <canvas id="mainCanvas" width="800" height="400"></canvas>
       <div id="controls">
         <button id="advanceButton">Advance Step</button>
-        <button id="stepBackButton">Step Back</button>
       </div>
       <div id="targetNumber">Target Number: <span id="targetValue">${targetNumber}</span></div>
+      <div id="stepInfo">Step: <span id="stepValue">0</span>, Substep: <span id="substepValue">0</span></div>
       <div id="status">Status: <span id="statusText"></span></div>
     </div>
   `;
@@ -29,10 +29,6 @@ const setupApp = () => {
 
   components.forEach(component => component.updateGlobalPosition(component.getGlobalPosition().x, component.getGlobalPosition().y));
 
-  // For demonstration purposes, add some key-value pairs
-  mapComponent.addPair('4', 3); // Example pairs based on target - current number logic
-  mapComponent.addPair('5', 2);
-
   let step = 0;
   let substep = 0;
 
@@ -42,7 +38,6 @@ const setupApp = () => {
     drawLines();
     requestAnimationFrame(render);
   };
-
   const drawArrow = (fromX: number, fromY: number, toX: number, toY: number, text?: string) => {
     const headlen = 10; // length of head in pixels
     const dx = toX - fromX;
@@ -58,94 +53,110 @@ const setupApp = () => {
     ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
     ctx.stroke();
     if (text) {
-      ctx.fillStyle = 'blue';
-      ctx.fillText(text, (fromX + toX) / 2, (fromY + toY) / 2);
+        ctx.fillStyle = 'blue';
+        const textOffset = 10; // Offset to move the text away from the line
+        const textX = (fromX + toX) / 2 + textOffset * Math.sin(angle);
+        const textY = (fromY + toY) / 2 - textOffset * Math.cos(angle);
+        ctx.fillText(text, textX, textY);
     }
-  };
+};
 
-  const drawLines = () => {
-    const numGlobalPos = numericComponent.getGlobalPosition();
-    const numLocalPos = numericComponent.getLocalPosition();
-    const mathGlobalPos = mathComponent.getGlobalPosition();
-    const mathNumberPos = mathComponent.getNumberPosition();
-    const mathFinalPos = {
-      x: mathGlobalPos.x + mathNumberPos.x,
-      y: mathGlobalPos.y + mathNumberPos.y - 10 // Drawing above the number
-    };
-
-    const numFinalPos = {
+const drawLines = () => {
+  const numGlobalPos = numericComponent.getGlobalPosition();
+  const numLocalPos = numericComponent.getLocalPosition();
+  const numFinalPos = {
       x: numGlobalPos.x + numLocalPos.x,
       y: numGlobalPos.y + numLocalPos.y
-    };
-
-    if (substep === 0 || substep === 1) {
-      drawArrow(numFinalPos.x, numFinalPos.y, mapComponent.getGlobalPosition().x + 100, mapComponent.getGlobalPosition().y + 75, 'inquire');
-    } else if (substep === 2) {
-      drawArrow(numFinalPos.x, numFinalPos.y, mathComponent.getGlobalPosition().x, mathComponent.getGlobalPosition().y, 'calculate');
-    } else if (substep === 3) {
-      const mathGlobalPos = mathComponent.getGlobalPosition();
-      const mathNumberPos = mathComponent.getNumberPosition();
-      const mathFinalPos = {
-        x: mathGlobalPos.x + mathNumberPos.x,
-        y: mathGlobalPos.y + mathNumberPos.y - 10 // Drawing above the number
-      };
-      drawArrow(mathFinalPos.x, mathFinalPos.y, mapComponent.getGlobalPosition().x + 100, mapComponent.getGlobalPosition().y + 75, 'add');
-    }
   };
 
+  const mapGlobalPos = mapComponent.getGlobalPosition();
+  const mapFinalPos = {
+      x: mapGlobalPos.x + 100,
+      y: mapGlobalPos.y + 75
+  };
+
+  const mathGlobalPos = mathComponent.getGlobalPosition();
+  const mathNumberPos = mathComponent.getNumberPosition();
+  const mathFinalPos = {
+      x: mathGlobalPos.x + mathNumberPos.x,
+      y: mathGlobalPos.y + mathNumberPos.y - 10 // Drawing above the number
+  };
+
+  if (substep === 0) {
+      drawArrow(numFinalPos.x, numFinalPos.y, mapFinalPos.x, mapFinalPos.y, 'inquire');
+      updateStatus(`Checking if ${numericComponent.getCurrentNumber()} is in the map.`);
+      mathComponent.showCalculation(false); // Hide calculation during inquiry
+  } else if (substep === 1) {
+      const responseText = mapComponent.hasKey(numericComponent.getCurrentNumber().toString()) ? 'yes' : 'no';
+      drawArrow(mapFinalPos.x, mapFinalPos.y, numFinalPos.x, numFinalPos.y, responseText);
+      updateStatus(`${numericComponent.getCurrentNumber()} ${responseText === 'yes' ? 'is' : 'is not'} in the map.`);
+      mathComponent.showCalculation(false); // Hide calculation during map response
+  } else if (substep === 2) {
+      drawArrow(numFinalPos.x, numFinalPos.y, mathComponent.getGlobalPosition().x, mathComponent.getGlobalPosition().y, 'calculate');
+      updateStatus(`Calculating complement of ${numericComponent.getCurrentNumber()}.`);
+      mathComponent.updateNumber(numericComponent.getCurrentNumber()); // Update math component with the current number
+      mathComponent.showCalculation(true);  // Show math calculation
+  } else if (substep === 3) {
+      const complement = mathComponent.getCurrentResult();
+      const keyPosition = { x: mapGlobalPos.x + 10, y: mapGlobalPos.y + (mapComponent.getNextKeyPosition() * 20) + 10 };
+      drawArrow(mathFinalPos.x, mathFinalPos.y, keyPosition.x, keyPosition.y, 'add');
+      updateStatus(`Adding complement ${complement} to the map.`);
+      mathComponent.showCalculation(true); // Show math calculation during addition to map
+      mapComponent.addPair(complement.toString(), numericComponent.getCurrentNumber()); // Add complement to the map
+  }
+};
   const updateStatus = (text: string) => {
     document.getElementById('statusText')!.innerText = text;
   };
 
-  const stepLogic = () => {
-    const currentNumber = numericComponent.getCurrentNumber();
-    const numGlobalPos = numericComponent.getGlobalPosition();
-    const numLocalPos = numericComponent.getLocalPosition();
-    const numFinalPos = {
-      x: numGlobalPos.x + numLocalPos.x,
-      y: numGlobalPos.y + numLocalPos.y
-    };
-
-    if (substep === 0) {
-      // Inquire if the number is in the map
-      updateStatus(`Checking if ${currentNumber} is in the map.`);
-      const keyPos = mapComponent.getKeyPosition(currentNumber.toString());
-      if (keyPos) {
-        // Solution found
-        updateStatus(`Solution found: ${currentNumber} + ${targetNumber - currentNumber} = ${targetNumber}`);
-        drawArrow(numFinalPos.x, numFinalPos.y, mapComponent.getGlobalPosition().x + 100, mapComponent.getGlobalPosition().y + 75, 'yes');
-      } else {
-        substep = 1;
-        updateStatus(`${currentNumber} not in the map.`);
-        drawArrow(numFinalPos.x, numFinalPos.y, mapComponent.getGlobalPosition().x + 100, mapComponent.getGlobalPosition().y + 75, 'no');
-      }
-    } else if (substep === 1) {
-      substep = 2;
-      updateStatus(`Calculating complement of ${currentNumber}.`);
-    } else if (substep === 2) {
-      // Calculate complement
-      mathComponent.updateNumber(currentNumber);
-      substep = 3;
-      updateStatus(`Complement calculated: ${targetNumber - currentNumber}. Adding to map...`);
-    } else if (substep === 3) {
-      // Add complement to the map
-      const complement = mathComponent.getCurrentResult();
-      mapComponent.addPair(complement.toString(), currentNumber);
-      updateStatus(`Added ${complement}: ${currentNumber} to the map.`);
-      substep = 0;
-      step++;
-      numericComponent.advance();
-    }
+  const updateStepInfo = () => {
+    document.getElementById('stepValue')!.innerText = step.toString();
+    document.getElementById('substepValue')!.innerText = substep.toString();
   };
 
+
+
+const stepLogic = () => {
+  const currentNumber = numericComponent.getCurrentNumber();
+  const numGlobalPos = numericComponent.getGlobalPosition();
+  const numLocalPos = numericComponent.getLocalPosition();
+  const numFinalPos = {
+    x: numGlobalPos.x + numLocalPos.x,
+    y: numGlobalPos.y + numLocalPos.y
+  };
+
+  if (substep === 0) {
+    // Inquire if the number is in the map
+    updateStatus(`Checking if ${currentNumber} is in the map.`);
+    substep = 1;
+  } else if (substep === 1) {
+    // Respond from the map
+    const keyPos = mapComponent.getKeyPosition(currentNumber.toString());
+    if (keyPos) {
+      // Solution found
+      updateStatus(`Solution found: ${currentNumber} + ${targetNumber - currentNumber} = ${targetNumber}`);
+      substep = 0; // Reset substep for next iteration
+    } else {
+      substep = 2;
+      updateStatus(`${currentNumber} not in the map.`);
+    }
+  } else if (substep === 2) {
+    updateStatus(`Calculating complement of ${currentNumber}.`);
+    substep = 3;
+  } else if (substep === 3) {
+    // Calculate complement and add to the map
+    mathComponent.updateNumber(currentNumber);
+    const complement = mathComponent.getCurrentResult();
+    mapComponent.addPair(complement.toString(), currentNumber);
+    updateStatus(`Complement calculated: ${complement}. Added ${complement}: ${currentNumber} to the map.`);
+    substep = 0;
+    step++;
+    numericComponent.advance();
+  }
+  updateStepInfo();
+};
   document.getElementById('advanceButton')!.addEventListener('click', () => {
     stepLogic();
-    render(); // Re-render on step change
-  });
-
-  document.getElementById('stepBackButton')!.addEventListener('click', () => {
-    numericComponent.stepBack();
-    mathComponent.updateNumber(numericComponent.getCurrentNumber());
     render(); // Re-render on step change
   });
 

@@ -1,62 +1,77 @@
-import { Component, createComponent, KeyPosition } from './Component';
+import { Component } from './Component';
 
-export interface MapComponent extends Component {
-  addPair(key: string, value: number): void;
-  getKeyPosition(key: string): KeyPosition;
-  hasKey(key: string): boolean;
+interface MapComponent extends Component {
+  addPair: (key: string, value: number) => void;
+  hasKey: (key: string) => boolean;
+  getKeyPosition: (key: string) => { x: number, y: number } | null;
+  getNextKeyPosition: () => number;
 }
 
-export const createMapComponent = (x: number, y: number): MapComponent => {
+const createMapComponent = (x: number, y: number): MapComponent => {
   const keyValuePairs = new Map<string, number>();
+  let globalX = x;
+  let globalY = y;
 
-  const drawFunc = (ctx: CanvasRenderingContext2D): void => {
-    const boxWidth = 200;
-    const boxHeight = 150;
-    ctx.clearRect(x, y, boxWidth, boxHeight); // Clear previous state
+  const draw = (ctx: CanvasRenderingContext2D) => {
     ctx.strokeStyle = 'black';
-    ctx.strokeRect(x - 10, y - 30, boxWidth + 20, boxHeight + 20); // Draw box
-
+    ctx.strokeRect(globalX, globalY, 200, 100);
     let index = 0;
-    keyValuePairs.forEach((value, key) => {
-      const yOffset = y + index * 20;
+    for (const [key, value] of keyValuePairs) {
       ctx.fillStyle = 'black';
-      ctx.fillText(`${key}: ${value}`, x, yOffset);
+      ctx.fillText(`${key}: ${value}`, globalX + 10, globalY + 20 + index * 20);
       index++;
-    });
+    }
   };
 
-  const logPositionsFunc = (): void => {
-    keyValuePairs.forEach((value, key) => {
-      const pos = getKeyPosition(key);
-      if (pos) {
-        console.log(`Map Component Key Position: ${key} (${pos.x}, ${pos.y})`);
-      }
-    });
-  };
-
-  const addPair = (key: string, value: number): void => {
+  const addPair = (key: string, value: number) => {
     keyValuePairs.set(key, value);
-    logPositionsFunc();
   };
 
-  const getKeyPosition = (key: string): KeyPosition => {
+  const hasKey = (key: string) => {
+    return keyValuePairs.has(key);
+  };
+
+  const getKeyPosition = (key: string) => {
     let index = 0;
     if (keyValuePairs.has(key)) {
-      for (let k of keyValuePairs.keys()) {
+      for (const k of keyValuePairs.keys()) {
         if (k === key) break;
         index++;
       }
-      return {
-        x,
-        y: y + index * 20,
-      };
+      return { x: globalX + 10, y: globalY + 20 + index * 20 };
     }
     return null;
   };
 
-  const hasKey = (key: string): boolean => keyValuePairs.has(key);
+  const getNextKeyPosition = () => {
+    return keyValuePairs.size;
+  };
 
-  const component = createComponent('map', x, y, drawFunc, logPositionsFunc);
+  const updateGlobalPosition = (newX: number, newY: number) => {
+    globalX = newX;
+    globalY = newY;
+  };
 
-  return { ...component, addPair, getKeyPosition, hasKey };
+  const getGlobalPosition = () => {
+    return { x: globalX, y: globalY };
+  };
+
+  const logPositions = () => {
+    console.log(`Map Component Global Position: (${globalX}, ${globalY})`);
+  };
+
+  return {
+    type: 'map',
+    draw,
+    addPair,
+    hasKey,
+    getKeyPosition,
+    getNextKeyPosition,
+    updateGlobalPosition,
+    getGlobalPosition,
+    logPositions
+  };
 };
+
+export { createMapComponent };    export type { MapComponent };
+

@@ -1,41 +1,69 @@
-import { Component, createComponent } from './Component';
+import { Component } from './Component';
 
-export interface MathComponent extends Component {
-  updateNumber(number: number): void;
-  getNumberPosition(): { x: number; y: number };
-  getCurrentResult(): number;
+interface MathComponent extends Component {
+  updateNumber: (num: number) => void;
+  getCurrentResult: () => number;
+  getNumberPosition: () => { x: number; y: number };
+  showCalculation: (show: boolean) => void;
 }
 
-export const createMathComponent = (x: number, y: number, targetNumber: number): MathComponent => {
+const createMathComponent = (x: number, y: number, target: number): MathComponent => {
+  let globalX = x;
+  let globalY = y;
   let currentNumber = 0;
-  let result = 0;
+  let showCalc = false;
 
-  const drawFunc = (ctx: CanvasRenderingContext2D): void => {
-    ctx.clearRect(x, y, 200, 50); // Clear previous state
+  const updateNumber = (num: number) => {
+    currentNumber = num;
+  };
+
+  const getCurrentResult = () => {
+    return target - currentNumber;
+  };
+
+  const getNumberPosition = () => {
+    return { x: 40, y: 20 };
+  };
+
+  const showCalculation = (show: boolean) => {
+    showCalc = show;
+  };
+
+  const draw = (ctx: CanvasRenderingContext2D) => {
     ctx.strokeStyle = 'black';
-    ctx.strokeRect(x - 10, y - 30, 200, 50); // Draw box
-    ctx.fillStyle = 'black';
-    ctx.fillText(`Target - ${currentNumber} = ${result}`, x, y);
+    ctx.strokeRect(globalX, globalY, 150, 50);
+    if (showCalc) {
+      ctx.fillStyle = 'black';
+      ctx.fillText('Target - Current Number = Complement', globalX + 10, globalY + 20);
+      ctx.fillText(`${target} - ${currentNumber} = ${getCurrentResult()}`, globalX + 10, globalY + 40);
+    }
   };
 
-  const logPositionsFunc = (): void => {
-    console.log(`Math Component Updated with Current Number: ${currentNumber}`);
+  const updateGlobalPosition = (newX: number, newY: number) => {
+    globalX = newX;
+    globalY = newY;
   };
 
-  const updateNumber = (number: number): void => {
-    currentNumber = number;
-    result = targetNumber - currentNumber;
-    logPositionsFunc();
+  const getGlobalPosition = () => {
+    return { x: globalX, y: globalY };
   };
 
-  const getNumberPosition = (): { x: number; y: number } => ({
-    x: 90, // Assuming the number is at the center horizontally
-    y: 10, // Adjusted to the position of the text
-  });
+  const logPositions = () => {
+    console.log(`Math Component Global Position: (${globalX}, ${globalY})`);
+  };
 
-  const getCurrentResult = (): number => result;
-
-  const component = createComponent('math', x, y, drawFunc, logPositionsFunc);
-
-  return { ...component, updateNumber, getNumberPosition, getCurrentResult };
+  return {
+    type: 'math',
+    draw,
+    updateNumber,
+    getCurrentResult,
+    getNumberPosition,
+    showCalculation,
+    updateGlobalPosition,
+    getGlobalPosition,
+    logPositions
+  };
 };
+
+export { createMathComponent };    export type { MathComponent };
+
