@@ -2,10 +2,14 @@ import './style.css';
 import { createMapComponent, MapComponent } from './components/MapComponent.ts';
 import { createMathComponent, MathComponent } from './components/MathComponent.ts';
 import { createNumericComponent } from './components/NumericComponent';
+import { generateTwoSumList, twoSum } from './make2Sum.ts';
 
-const targetNumber = 7;
 
 const setupApp = () => {
+  const targetNumber = 25;
+  const ourNumberObject = generateTwoSumList(targetNumber);
+  const ourNumberList = ourNumberObject.numbers;
+  const ourSolution = ourNumberObject.uniquePair;
   document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <div>
       <canvas id="mainCanvas" width="800" height="400"></canvas>
@@ -21,9 +25,12 @@ const setupApp = () => {
   const canvas = document.getElementById('mainCanvas') as HTMLCanvasElement;
   const ctx = canvas.getContext('2d')!;
 
-  const numericComponent = createNumericComponent([1, 2, 3, 4, 5], 50, 50);
+  const numericComponent = createNumericComponent( ourNumberList, 50, 50);
   const mathComponent = createMathComponent(300, 150, targetNumber);
   const mapComponent = createMapComponent(500, 50);
+
+  console.log('Our Number List:', ourNumberList);
+  console.log('Our solution', ourSolution);
 
   const components = [numericComponent, mathComponent, mapComponent];
 

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate 2 Sum List</title>
+</head>
+<body>
+<script>
+    function generateTwoSumList(target) {
+        // Calculate the number of pairs
+        let numPairs = Math.floor((target - 1) / 2);
+        let pairs = [];
+        let low = 1;
+        let high = target - 1;
+
+        // Create pairs from high and low bounds
+        for (let i = 0; i < numPairs; i++) {
+            pairs.push([low, high]);
+            low++;
+            high--;
+        }
+
+        // Initialize an empty list to store the numbers
+        let numbers = [];
+
+        // Randomly select one pair to include both numbers (unique solution)
+        let uniquePairIndex = Math.floor(Math.random() * numPairs);
+        let uniquePair = pairs[uniquePairIndex];
+        numbers.push(uniquePair[0], uniquePair[1]);
+
+        // For all other pairs, add only one element
+        for (let i = 0; i < numPairs; i++) {
+            if (i !== uniquePairIndex) {
+                let randomIndex = Math.floor(Math.random() * 2);
+                numbers.push(pairs[i][randomIndex]);
+            }
+        }
+
+        // Properly shuffle the list using Fisher-Yates shuffle
+        for (let i = numbers.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+        }
+
+        return {
+            numbers: numbers,
+            uniquePair: uniquePair
+        };
+    }
+
+    function twoSum(nums, target) {
+        const map = new Map();
+        for (let i = 0; i < nums.length; i++) {
+            const complement = target - nums[i];
+            if (map.has(complement)) {
+                return [map.get(complement), i];
+            }
+            map.set(nums[i], i);
+        }
+        return [];
+    }
+
+    // Example usage
+    let targetSum = 455;
+    let result = generateTwoSumList(targetSum);
+
+    console.log("targetSum:", targetSum);
+    console.log("Generated List:", result.numbers);
+    console.log("Unique Solution Pair:", result.uniquePair);
+    console.log("2 Sum Algorithm Result:", twoSum(result.numbers, targetSum));
+
+    // Verifying the 2 Sum algorithm result matches the unique pair
+    const indices = twoSum(result.numbers, targetSum);
+    if (indices.length === 2) {
+        const num1 = result.numbers[indices[0]];
+        const num2 = result.numbers[indices[1]];
+        console.log("2 Sum Found Pair:", [num1, num2]);
+        console.log("2 Sum Found Pair Sum:", num1 + num2);
+    } else {
+        console.log("2 Sum Algorithm did not find a valid pair");
+    }
+</script>
+</body>
+</html>
