@@ -4,8 +4,8 @@ interface NumericComponent extends Component {
   advance: () => void;
   stepBack: () => void;
   getCurrentNumber: () => number;
-  getCurrentIndex: () => number; // Add this method
-  getLocalPosition: () => { x: number, y: number }; // Add this method
+  getCurrentIndex: () => number;
+  getLocalPosition: (ctx: CanvasRenderingContext2D, index: number) => { x: number, y: number };
 }
 
 const createNumericComponent = (numbers: number[], x: number, y: number): NumericComponent => {
@@ -33,19 +33,46 @@ const createNumericComponent = (numbers: number[], x: number, y: number): Numeri
     return currentIndex;
   };
 
-  const getLocalPosition = () => {
-    return { x: 20 * currentIndex + 10, y: 30 };
+  const getLocalPosition = (ctx: CanvasRenderingContext2D, index: number) => {
+    let text = '[';
+    for (let i = 0; i < index; i++) {
+      text += numbers[i] + ', ';
+    }
+    text += numbers[index];
+    const width = ctx.measureText(text).width;
+    return { x: width, y: 30 };
   };
 
   const draw = (ctx: CanvasRenderingContext2D) => {
-    ctx.strokeStyle = 'black';
-    ctx.strokeRect(globalX, globalY, 150, 50);
+    ctx.clearRect(globalX, globalY - 20, 800, 50); // Clear the area before drawing
+    ctx.font = "16px Arial";
+    let listText = '[';
+    let offsetX = globalX;
+    const offsetY = globalY + 10; // Adjust this value to move the list down
+    ctx.fillText('[', offsetX, offsetY);
+    offsetX += ctx.measureText('[').width;
+  
     numbers.forEach((num, index) => {
-      ctx.fillStyle = index === currentIndex ? 'red' : 'black';
-      ctx.fillText(num.toString(), globalX + 20 * index + 10, globalY + 30);
+      const numText = num.toString();
+      if (index === currentIndex) {
+        ctx.fillStyle = 'red';
+      } else {
+        ctx.fillStyle = 'black';
+      }
+      ctx.fillText(numText, offsetX, offsetY);
+      offsetX += ctx.measureText(numText).width;
+  
+      if (index < numbers.length - 1) {
+        ctx.fillStyle = 'black';
+        ctx.fillText(', ', offsetX, offsetY);
+        offsetX += ctx.measureText(', ').width;
+      }
     });
+  
+    ctx.fillStyle = 'black';
+    ctx.fillText(']', offsetX, offsetY);
   };
-
+  
   const updateGlobalPosition = (newX: number, newY: number) => {
     globalX = newX;
     globalY = newY;
@@ -66,13 +93,13 @@ const createNumericComponent = (numbers: number[], x: number, y: number): Numeri
     advance,
     stepBack,
     getCurrentNumber,
-    getCurrentIndex, // Ensure this is included in the return object
-    getLocalPosition, // Ensure this is included in the return object
+    getCurrentIndex,
+    getLocalPosition,
     updateGlobalPosition,
     getGlobalPosition,
     logPositions
   };
 };
 
-export { createNumericComponent };    export type { NumericComponent };
-
+export { createNumericComponent };
+export type { NumericComponent };

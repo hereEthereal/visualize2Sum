@@ -69,27 +69,28 @@ const setupApp = () => {
     }
   };
 
+
   const drawLines = () => {
     const numGlobalPos = numericComponent.getGlobalPosition();
-    const numLocalPos = numericComponent.getLocalPosition();
+    const numLocalPos = numericComponent.getLocalPosition(ctx, numericComponent.getCurrentIndex());
     const numFinalPos = {
       x: numGlobalPos.x + numLocalPos.x,
-      y: numGlobalPos.y + numLocalPos.y
+      y: numGlobalPos.y + 15 // Adjust this value to match the list's y-coordinate offset
     };
-
+  
     const mapGlobalPos = mapComponent.getGlobalPosition();
     const mapFinalPos = {
       x: mapGlobalPos.x + 100,
       y: mapGlobalPos.y + 75
     };
-
+  
     const mathGlobalPos = mathComponent.getGlobalPosition();
     const mathNumberPos = mathComponent.getNumberPosition();
     const mathFinalPos = {
       x: mathGlobalPos.x + mathNumberPos.x,
       y: mathGlobalPos.y + mathNumberPos.y - 10 // Drawing above the number
     };
-
+  
     if (substep === 0) {
       drawArrow(numFinalPos.x, numFinalPos.y, mapFinalPos.x, mapFinalPos.y, 'inquire');
       updateStatus(`Checking if ${numericComponent.getCurrentNumber()} is in the map.`);
@@ -113,7 +114,8 @@ const setupApp = () => {
       mapComponent.addPair(complement.toString(), step); // Add complement to the map with the step number - 1
     }
   };
-
+  
+  
   const updateStatus = (text: string) => {
     document.getElementById('statusText')!.innerText = text;
   };
@@ -126,7 +128,7 @@ const setupApp = () => {
   const stepLogic = () => {
     const currentNumber = numericComponent.getCurrentNumber();
     const numGlobalPos = numericComponent.getGlobalPosition();
-    const numLocalPos = numericComponent.getLocalPosition();
+    const numLocalPos = numericComponent.getLocalPosition(ctx, numericComponent.getCurrentIndex());
     const numFinalPos = {
       x: numGlobalPos.x + numLocalPos.x,
       y: numGlobalPos.y + numLocalPos.y
